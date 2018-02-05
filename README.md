@@ -5,7 +5,6 @@
 [![Version](https://img.shields.io/npm/v/orm-ts.svg?style=flat-square)](https://www.npmjs.com/package/orm-ts)
 [![License](https://img.shields.io/npm/l/orm-ts.svg?style=flat-square)](https://github.com/zhang740/orm-ts/blob/master/LICENSE)
 
-Function level cache library.
 
 ## Install
 ```shell
