@@ -1,27 +1,73 @@
-import { getDecorators } from './decorators';
-import { IRepository } from './IRepository';
+import { lazyInject } from 'power-di/helper';
+import { IProvider } from './provider';
+import { Paginator } from './Paginator';
 import { Page } from './PageModel';
+import { ModelMetadata, ColumnMetadata, metaSymbol } from './BaseModel';
 
-const { lazyInject } = getDecorators();
+export class BaseRepository<ModelType = any, DTOType = any> {
+  protected get modelMetadata(): ModelMetadata {
+    return (this.constructor as any)[metaSymbol];
+  }
+  protected get tableName(): string {
+    return this.modelMetadata.tableName;
+  }
+  protected get primaryKey(): string {
+    return this.modelMetadata.primaryKey;
+  }
+  protected get fields() {
+    return this.modelMetadata.fields;
+  }
 
-export class BaseRepository<T = any> implements IRepository<T> {
   @lazyInject()
-  private repository: IRepository;
+  private provider: IProvider;
 
-  async queryOne(sql: string, params: any): Promise<T> {
-    return this.repository.queryOne(sql, params);
+  async queryOne(sql: string, params?: any): Promise<DTOType> {
+    return this.provider.queryOne(sql, params);
   }
-  async queryAll(sql: string, params: any): Promise<Page<T>> {
-    return this.repository.queryAll(sql, params);
-  }
-  async update(sql: string, params: any): Promise<T> {
-    return this.repository.update(sql, params);
-  }
-  async delete(sql: string, params: any): Promise<T> {
-    return this.repository.delete(sql, params);
+  async query(sql: string, params?: any): Promise<Page<DTOType>> {
+    // TODO 分页信息
+    return this.provider.query(sql, params);
   }
 
-  async getById(id: any): Promise<T> {
-    return await this.repository.queryOne('', [id]);
+  // extend helper methods
+  async getByPrimaryKey(id: any): Promise<DTOType> {
+    return await this.queryOne(`
+      SELECT * FROM ${this.tableName} WHERE ${this.primaryKey} = ?
+    `, [id]);
+  }
+  async deleteByPrimaryKey(id: any): Promise<DTOType> {
+    return await this.queryOne(`
+      DELETE FROM ${this.tableName} WHERE ${this.primaryKey} = ?
+    `, [id]);
+  }
+
+  async save(model: ModelType) {
+    const data: any = model;
+    const keyValue = data[this.primaryKey];
+    if (keyValue) {
+      return await this.queryOne(`
+      UPDATE ${this.tableName} SET
+      ${this.fields.map(field => `${field.tableFieldName} = ?`).join(', ')}
+      WHERE ${this.primaryKey} = ?
+    `, [
+          ...this.fields.map(field => data[field.tableFieldName]),
+          keyValue,
+        ]);
+    } else {
+      return await this.queryOne(`
+      INSERT INTO ${this.tableName} (
+        ${this.fields.map(field => `${field.tableFieldName} = ?`).join(', ')}
+      ) VALUES (${this.fields.map(field => `?`).join(', ')})
+    `, this.fields.map(field => data[field.tableFieldName]));
+    }
+  }
+
+  public async queryCount(sql: string, params?: string): Promise<number> {
+    const sqlResult: any = await this.query(sql, params);
+    return sqlResult[0] && sqlResult[0].count || 0;
+  }
+
+  public getPaginator(size: number, total: number) {
+    return new Paginator(size, total);
   }
 }

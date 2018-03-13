@@ -8,7 +8,8 @@
     "emitDecoratorMetadata": true,
     "preserveConstEnums": true,
     "declaration": true,
-    "sourceMap": true,
+    "sourceMap": false,
+    "inlineSourceMap": true,
     "removeComments": false,
     "pretty": true
   },

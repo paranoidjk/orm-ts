@@ -1,29 +1,48 @@
+import autobind from 'autobind-decorator';
 import { IocContext } from 'power-di';
 import { getGlobalType } from 'power-di/utils';
 import { getDecorators as diDecorators, Decorators as DIDecorators } from 'power-di/helper';
 import { BaseRepository } from './BaseRepository';
 import { BaseModel } from './index';
+import { MapperRule, metaSymbol } from './BaseModel';
 
+@autobind
 export class Decorators extends DIDecorators {
 
-  constructor(
-    private ioc: IocContext = IocContext.DefaultInstance,
-  ) {
-    super(ioc);
+  /**
+   * 多对一映射 (返回单数据)
+   * @param foreignKeyField 外键字段 (当前对象字段)
+   * @param modelCls 对应Model类型
+   * @param method 对应Model的仓储层方法
+   */
+  manyToOne(foreignKeyField: string, modelCls: any, method: string = 'getByPrimaryKey') {
+    return (target: any, key: string) => {
 
-    this.manyToOne = this.manyToOne.bind(this);
-    this.bindSql = this.bindSql.bind(this);
-    this.repository = this.repository.bind(this);
+      const mapperRule: MapperRule = {
+        mapperToDAO: (source, target) => { target[foreignKeyField] = source[key].xxx; },
+        mapperToModel: (source, target) => { },
+      };
+
+      return this.mapper(foreignKeyField, modelCls, method)(target, key);
+    };
   }
 
-  manyToOne(foreignKeyField: string, modelCls: any, method: string = 'getById') {
+  /**
+   * 一对一映射？？？？？
+   * @param foreignKeyField 外键字段 (对应对象字段)
+   * @param modelCls 对应Model类型
+   * @param method 对应Model的仓储层方法
+   */
+  oneToOne(foreignKeyField: string, modelCls: any, method: string) {
     return this.mapper(foreignKeyField, modelCls, method);
   }
 
-  oneToOne(foreignKeyField: string, modelCls: any, method: string = 'getById') {
-    return this.mapper(foreignKeyField, modelCls, method);
-  }
-
+  /**
+   * 一对多映射 (返回多个数据)
+   * @param foreignKeyField 外键字段 (当前对象字段)
+   * @param modelCls 对应Model类型
+   * @param method 对应Model的仓储层方法
+   */
   oneToMany(foreignKeyField: string, modelCls: any, method: string) {
     return this.mapper(foreignKeyField, modelCls, method);
   }
@@ -40,7 +59,8 @@ export class Decorators extends DIDecorators {
 
   repository(modelType: Function) {
     return (target: any) => {
-      this.ioc.register(target);
+      target[metaSymbol] = (modelType as any)[metaSymbol];
+      this.context.register(target);
       this.register(modelType)(target);
     };
   }
@@ -60,7 +80,7 @@ export class Decorators extends DIDecorators {
           return new Promise(async (resolve) => {
             if (!isLoaded) {
               isLoaded = true;
-              const domain = self.ioc.get<BaseRepository>(modelCls);
+              const domain = self.context.get<BaseRepository>(modelCls);
               const key = this[foreignKeyField];
               if (!domain) {
                 console.error(`No repository for: ${getGlobalType(modelCls)} .`);
@@ -76,6 +96,6 @@ export class Decorators extends DIDecorators {
   }
 }
 
-export function getDecorators(ioc: IocContext = IocContext.DefaultInstance) {
+export function getDecorators(ioc: IocContext | (() => IocContext) = IocContext.DefaultInstance) {
   return new Decorators(ioc);
 }

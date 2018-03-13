@@ -5,13 +5,11 @@ import './';
 
 import { ActivityModel, UserModel } from './model';
 import { ActivityService } from './service';
-import { MySQLRepository, IRepository } from '../lib';
-
-import { MockRepository } from '../lib/MockRepository';
+import { NoImplProvider, MockProvider, IProvider } from '../lib';
 
 async function main() {
   const ioc = IocContext.DefaultInstance;
-  ioc.register(MockRepository, IRepository);
+  ioc.register(MockProvider, IProvider);
 
   const activityModel = new ActivityModel({
     id: 1,

@@ -1,4 +1,4 @@
-import { getDecorators, BaseRepository } from '../../lib';
+import { BaseRepository, getDecorators } from '../../lib';
 import { ActivityModel } from '../model';
 const { repository, bindSql } = getDecorators();
 

@@ -10,6 +10,6 @@ export class ActivityDomain extends BaseDomain {
   repository: ActivityRepository;
 
   async getById(id: number) {
-    return await this.repository.getById(id);
+    return await this.repository.getByPrimaryKey(id);
   }
 }
