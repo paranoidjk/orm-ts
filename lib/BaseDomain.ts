@@ -1,2 +1,2 @@
-export abstract class BaseDomain<ModelType = any> {
+export abstract class BaseDomain {
 }

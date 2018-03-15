@@ -3,7 +3,6 @@ import { IProvider } from './provider';
 import { Paginator } from './Paginator';
 import { Page } from './PageModel';
 import { ModelMetadata, ColumnMetadata, getMetadata } from './BaseModel';
-import { toHyphenCase } from './util';
 import { setMetadata } from './BaseModel';
 
 export function repository(modelType: Function) {
@@ -128,7 +127,7 @@ export class BaseRepository<ModelType = any, DTOType = any> {
   protected get primaryKey(): string {
     return this.modelMetadata.primaryKey;
   }
-  protected get fields() {
+  protected get fields(): ColumnMetadata[] {
     return this.modelMetadata.fields;
   }
 
@@ -218,8 +217,8 @@ export class BaseRepository<ModelType = any, DTOType = any> {
       `, params);
 
       const _paginator = this.getPaginator(pageSize, _total);
-      const _offset = _paginator.getOffset(pageNum);
-      const _length = _paginator.getLength(pageNum);
+      // const _offset = _paginator.getOffset(pageNum);
+      // const _length = _paginator.getLength(pageNum);
       paginatorData = _paginator.getConfig(pageNum);
     }
 

@@ -1,6 +1,5 @@
-import { getDecorators, BaseRepository } from '../../lib';
+import { BaseRepository, repository } from '../../lib';
 import { UserModel } from '../model/user';
-const { repository } = getDecorators();
 
 import { getDecorators as getCacheDecorators } from 'any-cache';
 const { cachePut, cacheEvict } = getCacheDecorators();

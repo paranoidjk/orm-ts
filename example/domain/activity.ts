@@ -1,8 +1,8 @@
-import { BaseDomain, getDecorators } from '../../lib';
-const { lazyInject, register } = getDecorators();
+import { BaseDomain } from '../../lib';
 
 import { ActivityModel } from '../model';
 import { ActivityRepository } from '../repository';
+import { register, lazyInject } from '../ioc';
 
 @register()
 export class ActivityDomain extends BaseDomain {

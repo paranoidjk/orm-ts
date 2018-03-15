@@ -199,8 +199,8 @@ export const column = (config = new ColumnConfig) => {
   };
 };
 
-export abstract class BaseModel<DAOType = any> {
-  private static metadata: ModelMetadata;
+export abstract class BaseModel {
+  // private static metadata: ModelMetadata;
 
   private isSerializing = false;
 

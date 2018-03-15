@@ -1,6 +1,5 @@
 import { IProvider } from './IProvider';
 import { Page } from '../PageModel';
-import { IocContext } from 'power-di';
 import { BaseRepository } from '..';
 
 export class NoImplProvider<T> extends IProvider<T> {

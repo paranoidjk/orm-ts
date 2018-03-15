@@ -1,5 +1,4 @@
 import { Page } from '../PageModel';
-import { IocContext } from 'power-di';
 import { BaseRepository } from '../BaseRepository';
 
 export abstract class IProvider<T = any> {
