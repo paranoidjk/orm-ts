@@ -135,6 +135,10 @@ export class BaseRepository<ModelType = any, DTOType = any> {
   private provider: IProvider;
 
   protected convertToModel(data: any) {
+    if (!data) {
+      return data;
+    }
+
     const repoSelf = this;
     const model = new this.modelMetadata.modelType(data);
     this.modelMetadata.reference.forEach(reference => {
