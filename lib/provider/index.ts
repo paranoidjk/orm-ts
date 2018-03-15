@@ -1,3 +1,3 @@
 export * from './IProvider';
-export * from './MockRepository';
-export * from './NoImplRepository';
+export * from './MockProvider';
+export * from './NoImplProvider';

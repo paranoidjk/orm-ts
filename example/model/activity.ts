@@ -1,5 +1,4 @@
-import { BaseModel, getDecorators } from '../../lib';
-const { manyToOne } = getDecorators();
+import { BaseModel, manyToOne } from '../../lib';
 
 import { UserModel } from './user';
 import { TeamModel } from './team';

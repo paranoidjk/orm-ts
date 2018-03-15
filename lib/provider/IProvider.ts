@@ -1,7 +1,9 @@
 import { Page } from '../PageModel';
+import { IocContext } from 'power-di';
+import { BaseRepository } from '../BaseRepository';
 
 export abstract class IProvider<T = any> {
   abstract async queryOne(sql: string, params?: any): Promise<T>;
   abstract async  query(sql: string, params?: any): Promise<Page<T>>;
-
+  abstract getRepositoryByModelClass(modelCls: any): BaseRepository;
 }
