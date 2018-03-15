@@ -1,6 +1,6 @@
 {
   "name": "orm-ts",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "orm",
   "keywords": [
     "orm"
@@ -8,8 +8,8 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "lib/*.js",
-    "lib/*.d.ts",
+    "lib/**/*.js",
+    "lib/**/*.d.ts",
     "dist"
   ],
   "dependencies": {
