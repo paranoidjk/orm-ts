@@ -24,11 +24,11 @@ export const mapper = (mapper: DataMapperType) => (target: any, key: string) => 
 export const jsonMapper = () => {
   return mapper({
     mapperToDAO: (data) => guard(
-      () => typeof data !== 'string' ? JSON.stringify(data) : data, '',
+      () => (data && typeof data !== 'string') ? JSON.stringify(data) : data, '',
       (err) => console.log('jsonMapper to dao err:', err)
     ),
     mapperToModel: (data: any) => guard(
-      () => typeof data === 'string' ? JSON.parse(data) : data, data,
+      () => (data && typeof data === 'string') ? JSON.parse(data) : data, data,
       (err) => console.log('jsonMapper to model err:', err)
     ),
   });
@@ -41,7 +41,7 @@ export const enumMapper = (enumType: any) => {
       (err) => console.log('enumMpper to dao err:', err)
     ),
     mapperToModel: (data: any) => guard(
-      () => !Number.isNaN(+data) ? enumType[+data as any] : data, null,
+      () => Number.isNaN(+data) ? enumType[+data as any] : data, null,
       (err) => console.log('enumMpper to model err:', err)
     ),
   });
