@@ -172,7 +172,7 @@ export const model = (config = new ModelConfig) => {
     });
 
     metadata.foreignKeys.forEach(fk => {
-      if (!metadata.fields.find(f => f.tableFieldName === fk)) {
+      if (!metadata.fields.find(f => f.modelFieldName === fk)) {
         metadata.fields.push(complateFieldInfo({
           modelFieldName: fk,
           tableFieldName: undefined,
