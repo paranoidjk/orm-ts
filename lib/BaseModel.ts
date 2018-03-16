@@ -16,6 +16,8 @@ export const mapper = (mapper: DataMapperType) => (target: any, key: string) => 
   const field = metadata.fields.find(f => f.modelFieldName === key);
   if (field) {
     field.mapper = mapper;
+  } else {
+    throw new Error('@dataMapper NEED top of @column.');
   }
 };
 
@@ -26,7 +28,7 @@ export const jsonMapper = () => {
       (err) => console.log('jsonMapper to dao err:', err)
     ),
     mapperToModel: (data: any) => guard(
-      () => JSON.parse(data), null,
+      () => JSON.parse(data), data,
       (err) => console.log('jsonMapper to model err:', err)
     ),
   });

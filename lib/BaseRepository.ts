@@ -292,7 +292,6 @@ export class BaseRepository<ModelType = any, DTOType = any> {
         ) VALUES (${filterFields.map(field => `?`).join(', ')})
       `, values);
     }
-    console.log('save over', result);
     if (result.affectedRows === 1) {
       return {
         ...data,
