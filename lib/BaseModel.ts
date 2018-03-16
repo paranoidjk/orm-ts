@@ -24,11 +24,11 @@ export const mapper = (mapper: DataMapperType) => (target: any, key: string) => 
 export const jsonMapper = () => {
   return mapper({
     mapperToDAO: (data) => guard(
-      () => JSON.stringify(data), '',
+      () => typeof data !== 'string' ? JSON.stringify(data) : data, '',
       (err) => console.log('jsonMapper to dao err:', err)
     ),
     mapperToModel: (data: any) => guard(
-      () => JSON.parse(data), data,
+      () => typeof data === 'string' ? JSON.parse(data) : data, data,
       (err) => console.log('jsonMapper to model err:', err)
     ),
   });
