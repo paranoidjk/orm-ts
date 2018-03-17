@@ -65,7 +65,7 @@ function buildSQLStruct(metadata: ModelMetadata, funcName: string) {
           }
           struct.argLength += 1;
           return `\`${field.tableFieldName}\` = ?`;
-        }).join(', ');
+        }).join(' AND ');
     } else if (clause.startsWith('GroupBy')) {
       console.warn('Not Impl Clause: GroupBy.');
     } else if (clause.startsWith('OrderBy')) {
@@ -103,10 +103,10 @@ export function bindSql(initSqlStruct: SQLStruct = {}) {
           ...buildSQLStruct(metadata, key),
         };
 
-        const data = await this.queryBySqlStruct(sqlStruct, args);
+        const data = await (this as any).queryBySqlStruct(sqlStruct, args);
         if (sqlStruct.paged) {
           if (data.dataList && data.dataList.length) {
-            data.dataList = data.dataList.map(item => (this as any).convertToModel(item));
+            data.dataList = data.dataList.map((item: any) => (this as any).convertToModel(item));
           }
           return data;
         } else {
@@ -173,20 +173,20 @@ export class BaseRepository<ModelType = any, DTOType = any> {
     return model;
   }
 
-  public async queryCount(sql: string, params?: any[]): Promise<number> {
+  protected async queryCount(sql: string, params?: any[]): Promise<number> {
     const sqlResult: any = await this.query(sql, params);
     return sqlResult[0] && sqlResult[0].count || 0;
   }
 
-  async queryOne(sql: string, params?: any[]): Promise<DTOType> {
+  protected async queryOne(sql: string, params?: any[]): Promise<DTOType> {
     return await this.provider.queryOne(sql, params);
   }
 
-  async query(sql: string, params?: any): Promise<any> {
+  protected async query(sql: string, params?: any): Promise<any> {
     return await this.provider.query(sql, params);
   }
 
-  async queryBySqlStruct(sqlStruct: SQLStruct, params: any[] = [])
+  protected async queryBySqlStruct(sqlStruct: SQLStruct, params: any[] = [])
     : Promise<Page<DTOType>> {
     if (sqlStruct.argLength !== params.length) {
       console.log(sqlStruct);
@@ -239,6 +239,10 @@ export class BaseRepository<ModelType = any, DTOType = any> {
     }
   }
 
+  protected getPaginator(size: number, total: number) {
+    return new Paginator(size, total);
+  }
+
   // extend helper methods
   async getByPrimaryKey(id: any): Promise<DTOType> {
     return this.convertToModel(
@@ -253,6 +257,7 @@ export class BaseRepository<ModelType = any, DTOType = any> {
     `, [id])
     );
   }
+
   async deleteByPrimaryKey(id: any): Promise<DTOType> {
     return this.convertToModel(
       await this.query(`
@@ -299,9 +304,5 @@ export class BaseRepository<ModelType = any, DTOType = any> {
       };
     }
     throw new Error('mysql insert error: ' + JSON.stringify(result));
-  }
-
-  public getPaginator(size: number, total: number) {
-    return new Paginator(size, total);
   }
 }

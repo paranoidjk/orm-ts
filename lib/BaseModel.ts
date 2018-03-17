@@ -134,8 +134,11 @@ export const getMetadata = (classType: any): ModelMetadata => {
 //#endregion
 
 export class ModelConfig {
+  /** 对应表名，默认为类名小写 */
   tableName?: string;
+  /** 主键 */
   primaryKey: string = 'id';
+  /** 与表结构对应是否 驼峰-连字符 转换 */
   camelCase ?= true;
 }
 export const model = (config = new ModelConfig) => {
