@@ -75,10 +75,10 @@ function buildSQLStruct(metadata: ModelMetadata, funcName: string) {
 
           let direct = 'ASC';
           if (name.endsWith('DESC')) {
-            name.substr(0, name.length - 4);
+            name = name.substr(0, name.length - 4);
             direct = 'DESC';
           } else if (name.endsWith('ASC')) {
-            name.substr(0, name.length - 3);
+            name = name.substr(0, name.length - 3);
           }
           const field = metadata.fields.find(f => f.modelFieldName === name);
           if (!field) {
