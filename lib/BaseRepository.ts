@@ -208,7 +208,6 @@ export class BaseRepository<ModelType = any, DTOType = any> {
     if (sqlStruct.argLength !== params.length) {
       throw new Error(`[queryBySqlStruct] params error! FIND ${params.length}, NEED ${sqlStruct.argLength}`);
     }
-    console.log('queryBySqlStruct', sqlStruct);
 
     const select = sqlStruct.select ? `SELECT
         ${sqlStruct.select}
