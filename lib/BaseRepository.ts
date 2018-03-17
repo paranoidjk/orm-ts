@@ -11,30 +11,39 @@ export function repository(modelType: Function) {
   };
 }
 
-export interface SQLStruct {
+export interface SQLConfig {
+  /** 返回多条时默认为true */
+  paged?: boolean;
+  /** 是否转换成Model */
+  convertToModel?: boolean;
+}
+
+export interface SQLStruct extends SQLConfig {
   select?: string;
   from?: string;
   where?: string;
   groupBy?: string;
   orderBy?: string;
   limit?: string;
-  paged?: boolean;
+  multi?: boolean;
   argLength?: number;
 }
 
-function buildSQLStruct(metadata: ModelMetadata, funcName: string) {
+function buildSQLStruct(initData: SQLConfig, metadata: ModelMetadata, funcName: string) {
   /**
-   * TODO:
    * getByIdAndUserIdGroupByTypeOrderByCreateTimeAndUpdateTimeDESC
    * getAllByUserId
+   * TODO:
    * 抽象语法树结构？
    */
   const struct: SQLStruct = {
     select: metadata.fields.map(field => `\`${field.tableFieldName}\``).join(', '),
     from: `\`${metadata.tableName}\``,
-    limit: '0, 1',
-    paged: false,
+    paged: true,
+    multi: false,
     argLength: 0,
+    convertToModel: true,
+    ...initData,
   };
   const indexs = ['getBy', 'getAllBy', 'GroupBy', 'OrderBy']
     .map(k => funcName.indexOf(k))
@@ -49,10 +58,13 @@ function buildSQLStruct(metadata: ModelMetadata, funcName: string) {
 
   subClauses.forEach(clause => {
     if (clause.startsWith('getBy') || clause.startsWith('getAllBy')) {
-      struct.paged = clause.startsWith('getAllBy');
-      if (struct.paged) {
+      struct.multi = clause.startsWith('getAllBy');
+      if (struct.multi && struct.paged) {
         struct.argLength += 2;
         struct.limit = '?, ?';
+      } else if (!struct.multi) {
+        struct.paged = false;
+        struct.limit = '1';
       }
 
       struct.where = clause.replace(/getBy|getAllBy/g, '').split(/And/g)
@@ -101,26 +113,15 @@ function buildSQLStruct(metadata: ModelMetadata, funcName: string) {
   return struct;
 }
 
-export function bindSql(initSqlStruct: SQLStruct = {}) {
+export function bindSql(sqlConfig: SQLConfig = {}) {
   let sqlStruct: SQLStruct;
   return (target: any, key: string) => {
     return {
       value: async function (this: BaseRepository, ...args: any[]) {
         const metadata: ModelMetadata = (this as any).modelMetadata;
-        sqlStruct = sqlStruct || {
-          ...initSqlStruct,
-          ...buildSQLStruct(metadata, key),
-        };
+        sqlStruct = sqlStruct || buildSQLStruct(sqlConfig, metadata, key);
 
-        const data = await (this as any).queryBySqlStruct(sqlStruct, args);
-        if (sqlStruct.paged) {
-          if (data.dataList && data.dataList.length) {
-            data.dataList = data.dataList.map((item: any) => (this as any).convertToModel(item));
-          }
-          return data;
-        } else {
-          return (this as any).convertToModel(data);
-        }
+        return await (this as any).queryBySqlStruct(sqlStruct, args);
       }
     };
   };
@@ -169,9 +170,16 @@ export class BaseRepository<ModelType = any, DTOType = any> {
               if (!repo) {
                 throw new Error(`No repository for: ${modelCls.name} .`);
               }
+              const keyValue = this[foreignKeyField];
 
-              const key = this[foreignKeyField];
-              data = new modelCls(await (repo as any)[method](key));
+              if (method === 'getByPrimaryKey') {
+                data = repo.getByPrimaryKey(keyValue);
+              } else {
+                data = repo.queryBySqlStruct(
+                  buildSQLStruct({ paged: false }, repo.modelMetadata, method),
+                  [keyValue]
+                );
+              }
             }
             resolve(data);
           });
@@ -198,9 +206,9 @@ export class BaseRepository<ModelType = any, DTOType = any> {
   protected async queryBySqlStruct(sqlStruct: SQLStruct, params: any[] = [])
     : Promise<Page<DTOType>> {
     if (sqlStruct.argLength !== params.length) {
-      console.log(sqlStruct);
       throw new Error(`[queryBySqlStruct] params error! FIND ${params.length}, NEED ${sqlStruct.argLength}`);
     }
+    console.log('queryBySqlStruct', sqlStruct);
 
     const select = sqlStruct.select ? `SELECT
         ${sqlStruct.select}
@@ -242,15 +250,19 @@ export class BaseRepository<ModelType = any, DTOType = any> {
     }
 
     const sql = `${select} ${from} ${where} ${groupBy} ${orderBy} ${limit}`;
-    const result: any = await this.provider.query(sql, params);
+    let result: any[] = await this.provider.query(sql, params);
+
+    if (sqlStruct.convertToModel) {
+      result = [].concat(result || []).map(item => this.convertToModel(item));
+    }
 
     if (sqlStruct.paged) {
       return {
-        dataList: [].concat(result),
+        dataList: result,
         paginator: paginatorData,
       };
     } else {
-      return result && result[0];
+      return sqlStruct.multi ? result : result[0];
     }
   }
 
@@ -259,7 +271,7 @@ export class BaseRepository<ModelType = any, DTOType = any> {
   }
 
   // extend helper methods
-  async getByPrimaryKey(id: any): Promise<DTOType> {
+  async getByPrimaryKey(id: any): Promise<ModelType> {
     return this.convertToModel(
       await this.queryOne(`
       SELECT
@@ -268,12 +280,12 @@ export class BaseRepository<ModelType = any, DTOType = any> {
         \`${this.tableName}\`
       WHERE
         \`${this.primaryKey}\` = ?
-       LIMIT 0, 1
+       LIMIT 1
     `, [id])
     );
   }
 
-  async deleteByPrimaryKey(id: any): Promise<DTOType> {
+  async deleteByPrimaryKey(id: any): Promise<ModelType> {
     return this.convertToModel(
       await this.query(`
       DELETE FROM \`${this.tableName}\` WHERE \`${this.primaryKey}\` = ?
@@ -281,7 +293,7 @@ export class BaseRepository<ModelType = any, DTOType = any> {
     );
   }
 
-  async save(model: ModelType) {
+  async save(model: ModelType): Promise<ModelType> {
     const data: any = model;
 
     const updateFields = Object.keys(model);
