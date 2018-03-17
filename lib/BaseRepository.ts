@@ -45,6 +45,12 @@ function buildSQLStruct(initData: SQLConfig, metadata: ModelMetadata, funcName: 
     convertToModel: true,
     ...initData,
   };
+
+  if (funcName === 'getAll') {
+    struct.argLength = 2;
+    struct.multi = true;
+  }
+
   const indexs = ['getBy', 'getAllBy', 'GroupBy', 'OrderBy']
     .map(k => funcName.indexOf(k))
     .filter(i => i >= 0)
@@ -173,9 +179,9 @@ export class BaseRepository<ModelType = any, DTOType = any> {
               const keyValue = this[foreignKeyField];
 
               if (method === 'getByPrimaryKey') {
-                data = repo.getByPrimaryKey(keyValue);
+                data = await repo.getByPrimaryKey(keyValue);
               } else {
-                data = repo.queryBySqlStruct(
+                data = await repo.queryBySqlStruct(
                   buildSQLStruct({ paged: false }, repo.modelMetadata, method),
                   [keyValue]
                 );
