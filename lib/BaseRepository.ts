@@ -223,8 +223,8 @@ export class BaseRepository<ModelType = any, DTOType = any> {
 
     let paginatorData;
     if (sqlStruct.paged) {
-      const pageNum: number = params[params.length - 2];
-      const pageSize: number = params[params.length - 1];
+      const pageSize: number = params.pop();
+      const pageNum: number = params.pop();
       if (Number.isNaN(pageNum) || Number.isNaN(pageSize)) {
         throw new Error('[queryBySqlStruct] params error! Need pageNum and pageSize in args.');
       }
@@ -234,9 +234,11 @@ export class BaseRepository<ModelType = any, DTOType = any> {
       `, params);
 
       const _paginator = this.getPaginator(pageSize, _total);
-      // const _offset = _paginator.getOffset(pageNum);
-      // const _length = _paginator.getLength(pageNum);
+      const _offset = _paginator.getOffset(pageNum);
+      const _length = _paginator.getLength(pageNum);
       paginatorData = _paginator.getConfig(pageNum);
+
+      params.push(_offset, _length);
     }
 
     const sql = `${select} ${from} ${where} ${groupBy} ${orderBy} ${limit}`;
