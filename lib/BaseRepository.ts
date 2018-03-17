@@ -46,8 +46,11 @@ function buildSQLStruct(initData: SQLConfig, metadata: ModelMetadata, funcName: 
     ...initData,
   };
 
-  if (funcName === 'getAll') {
-    struct.argLength = 2;
+  if (funcName.startsWith('getAll')) {
+    if (struct.paged) {
+      struct.argLength = 2;
+      struct.limit = '?, ?';
+    }
     struct.multi = true;
   }
 
@@ -64,11 +67,7 @@ function buildSQLStruct(initData: SQLConfig, metadata: ModelMetadata, funcName: 
 
   subClauses.forEach(clause => {
     if (clause.startsWith('getBy') || clause.startsWith('getAllBy')) {
-      struct.multi = clause.startsWith('getAllBy');
-      if (struct.multi && struct.paged) {
-        struct.argLength += 2;
-        struct.limit = '?, ?';
-      } else if (!struct.multi) {
+      if (!struct.multi) {
         struct.paged = false;
         struct.limit = '1';
       }
@@ -212,6 +211,7 @@ export class BaseRepository<ModelType = any, DTOType = any> {
   protected async queryBySqlStruct(sqlStruct: SQLStruct, params: any[] = [])
     : Promise<Page<DTOType>> {
     if (sqlStruct.argLength !== params.length) {
+      console.log('[queryBySqlStruct]', sqlStruct);
       throw new Error(`[queryBySqlStruct] params error! FIND ${params.length}, NEED ${sqlStruct.argLength}`);
     }
 
