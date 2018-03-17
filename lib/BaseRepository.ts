@@ -67,7 +67,16 @@ function buildSQLStruct(metadata: ModelMetadata, funcName: string) {
           return `\`${field.tableFieldName}\` = ?`;
         }).join(' AND ');
     } else if (clause.startsWith('GroupBy')) {
-      console.warn('Not Impl Clause: GroupBy.');
+      struct.groupBy = clause.replace(/GroupBy/g, '').split(/And/g)
+        .map(name => {
+          name = `${name[0].toLowerCase()}${name.substr(1)}`;
+
+          const field = metadata.fields.find(f => f.modelFieldName === name);
+          if (!field) {
+            throw new Error(`No field [${name}]! [${metadata.modelType.name}] -> ${funcName}`);
+          }
+          return `\`${field.tableFieldName}\``;
+        }).join(', ');
     } else if (clause.startsWith('OrderBy')) {
       struct.orderBy = clause.replace(/OrderBy/g, '').split(/And/g)
         .map(name => {
@@ -202,10 +211,10 @@ export class BaseRepository<ModelType = any, DTOType = any> {
     const where = sqlStruct.where ? `WHERE
         ${sqlStruct.where}
     ` : '';
-    const groupBy = sqlStruct.groupBy ? `GroupBy
+    const groupBy = sqlStruct.groupBy ? `Group By
         ${sqlStruct.orderBy}
     ` : '';
-    const orderBy = sqlStruct.orderBy ? `OrderBy
+    const orderBy = sqlStruct.orderBy ? `Order By
         ${sqlStruct.orderBy}
     ` : '';
     const limit = sqlStruct.limit ? `LIMIT
@@ -214,7 +223,11 @@ export class BaseRepository<ModelType = any, DTOType = any> {
 
     let paginatorData;
     if (sqlStruct.paged) {
-      const pageNum: number = params[params.length - 2], pageSize: number = params[params.length - 1];
+      const pageNum: number = params[params.length - 2];
+      const pageSize: number = params[params.length - 1];
+      if (Number.isNaN(pageNum) || Number.isNaN(pageSize)) {
+        throw new Error('[queryBySqlStruct] params error! Need pageNum and pageSize in args.');
+      }
 
       const _total = await this.queryCount(`SELECT
           count(1) AS count ${from} ${where} ${groupBy}
