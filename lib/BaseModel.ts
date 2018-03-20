@@ -104,6 +104,7 @@ export interface ColumnMetadata {
   modelFieldName: string;
   tableFieldName: string;
   mapper: DataMapperType;
+  isFK: boolean;
 }
 export interface ModelMetadata {
   modelType?: any;
@@ -182,6 +183,7 @@ export const model = (config = new ModelConfig) => {
           modelFieldName: fk,
           tableFieldName: undefined,
           mapper: {},
+          isFK: true,
         }));
       }
     });
@@ -200,6 +202,7 @@ export const column = (config = new ColumnConfig) => {
       modelFieldName: key,
       tableFieldName: config.name,
       mapper: {},
+      isFK: false,
     });
   };
 };
@@ -237,13 +240,23 @@ export abstract class BaseModel {
     return data;
   }
 
+  async toDTO<T extends BaseModel = any>(select?: (model: T) => Partial<T>): Promise<Partial<T>> {
+    const dto: any = {};
+    const source = select ? select(this as any) : this;
+    for (const key in source) {
+      dto[key] = await (this as any)[key];
+    }
+    return dto;
+  }
+
   private mapper(source: Readonly<any>, target: any, type: 'toDAO' | 'toModel' | 'none') {
     if (!source) {
       return;
     }
     const cls = this.constructor as any;
+    const metadata = getMetadata(cls);
 
-    getMetadata(cls).fields.forEach(field => {
+    metadata.fields.forEach(field => {
       if (!(field.modelFieldName in source) && !(field.tableFieldName in source)) {
         return;
       }

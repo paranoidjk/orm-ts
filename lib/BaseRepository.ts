@@ -189,7 +189,10 @@ export class BaseRepository<ModelType = any, DTOType = any> {
             resolve(data);
           });
         },
-        set: async function (value: any) { data = await value; },
+        set: async function (value: any) {
+          data = await value;
+          this[foreignKeyField] = data[getMetadata(modelCls).primaryKey];
+        },
       });
     });
     return model;
