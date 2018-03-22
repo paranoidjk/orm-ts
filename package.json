@@ -64,12 +64,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zhang740/egg-cache.git"
+    "url": "git@github.com:zhang740/orm-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/zhang740/egg-cache/issues"
+    "url": "https://github.com/zhang740/orm-ts/issues"
   },
-  "homepage": "https://github.com/zhang740/egg-cache#readme",
+  "homepage": "https://github.com/zhang740/orm-ts#readme",
   "author": "zhang740@vmzclub.com",
   "license": "MIT"
 }
